@@ -1,6 +1,6 @@
 import {KoaMiddleware} from './MiddlewareType'
-import {isIHttpError} from '../util/Errors'
 import logger from '../util/Logger'
+import {isIHttpError} from '../errors/IHttpError'
 
 export default function ErrorMiddleware(): KoaMiddleware {
   return async (ctx, next) => {

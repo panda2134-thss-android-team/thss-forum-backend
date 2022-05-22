@@ -1,7 +1,8 @@
 import {TokenService} from '../service/TokenService'
-import {BadRequestError, UnauthorizedError} from '../util/Errors'
 import {User} from '../model/User'
 import {KoaMiddleware} from './MiddlewareType'
+import {UnauthorizedError} from '../errors/UnauthorizedError'
+import {BadRequestError} from '../errors/BadRequestError'
 
 export default function AuthMiddleware(secret: string, expireSeconds: number): KoaMiddleware {
   const tokenService = new TokenService(secret, expireSeconds)
@@ -16,7 +17,7 @@ export default function AuthMiddleware(secret: string, expireSeconds: number): K
     if (! uid) {
       throw new UnauthorizedError()
     }
-    const user = await User.findById(uid)
+    const user = await User.findById(uid).populate('blockedUsers').exec()
     if (! user) {
       throw new UnauthorizedError()
     }

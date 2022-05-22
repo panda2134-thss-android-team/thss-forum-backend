@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import {z} from 'zod'
 
 export const emailSchema = z.string().email('电子邮件格式错误')
 export const passwordSchema = z.string()
@@ -7,5 +7,6 @@ export const passwordSchema = z.string()
   .regex(/\p{ASCII}+/gu)
 export const userUpdateSchema = z.object({
   avatar: z.string(),
-  nickname: z.string()
+  nickname: z.string(),
+  email: emailSchema
 }).partial()

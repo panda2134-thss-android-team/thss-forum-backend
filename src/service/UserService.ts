@@ -1,14 +1,18 @@
 import {User, UserSchema} from '../model/User'
 import {Following} from '../model/Following'
-import {emailSchema, passwordSchema, userUpdateSchema} from '../util/Schema'
 import PasswordUtil from '../util/PasswordUtil'
 import bcrypt from 'bcrypt'
-import {ResourceNotFoundError, UnauthorizedError} from '../util/Errors'
 import {Types} from 'mongoose'
+import {UnauthorizedError} from '../errors/UnauthorizedError'
+import {ResourceNotFoundError} from '../errors/ResourceNotFoundError'
+import {emailSchema, passwordSchema, userUpdateSchema} from '../schema/users'
+import {z} from 'zod'
+import {DuplicatedUserError} from '../errors/DuplicatedUserError'
 
 export class UserService {
   /**
    * 获得关注者列表
+   * @description 谁关注了我(profile)？
    * @param user 当前用户
    */
   async getFollowersOf (user: UserSchema): Promise<UserSchema[]> {
@@ -18,6 +22,7 @@ export class UserService {
 
   /**
    * 获得被关注者列表
+   * @description 我(profile)关注了谁？
    * @param user 当前用户
    */
   async getFollowedBy (user: UserSchema): Promise<UserSchema[]> {
@@ -77,18 +82,28 @@ export class UserService {
       email,
       passwordHash: await PasswordUtil.hash(password)
     })
-    return await newUser.save()
+    try {
+      return await User.create(newUser)
+    } catch (e) {
+      if ((e as any).code === 11000) { // E11000: duplicate key
+        throw new DuplicatedUserError(email)
+      } else {
+        throw e;
+      }
+    }
   }
 
   /**
    * 进行用户登录；如果密码正确，返回用户对象
-   * 找不到用户时返回null；密码错误时抛出异常
+   * 找不到用户时/密码错误时抛出异常
    * @param email 电子邮箱
    * @param password 密码
    */
-  async login (email: string, password: string): Promise<UserSchema | null> {
+  async login (email: string, password: string): Promise<UserSchema> {
     const user = await User.findOne({email}).exec()
-    if (!user) return null
+    if (!user) {
+      throw new ResourceNotFoundError('user', email)
+    }
 
     const passwordMatch = await bcrypt.compare(password, user.passwordHash)
     if (!passwordMatch) {
@@ -103,9 +118,22 @@ export class UserService {
    * @param user 用户
    * @param update 更新信息对象，可包含 `avatar` 和 `nickname` 键
    */
-  async updateUserProfile (user: UserSchema, update: Pick<UserSchema, 'avatar' | 'nickname'>): Promise<void> {
+  async updateUserProfile (user: UserSchema, update: z.infer<typeof userUpdateSchema>): Promise<void> {
     userUpdateSchema.parse(update)
-    User.findByIdAndUpdate(user._id, {$set: update})
+
+    let res: UserSchema | null
+    try {
+      res = await User.findByIdAndUpdate(user.id, {$set: update})
+    } catch (e) {
+      if ((e as any).code === 11000) {
+        throw new DuplicatedUserError(user.email)
+      } else {
+        throw e
+      }
+    }
+    if (!res) {
+      throw new ResourceNotFoundError('user', user.id)
+    }
   }
 
   /**
@@ -155,5 +183,18 @@ export class UserService {
     // a bug of mongoose types
     // @ts-ignore
     await User.findOneAndUpdate(user.id, {$pullAll: {blockedUsers: new Types.ObjectId(userIdToUnblock)}})
+  }
+
+  /**
+   * 对用户信息字段进行过滤供前端读取
+   * @param user 用户对象
+   */
+  filterUserModelFields (user: UserSchema) {
+    return {
+      uid: user.id,
+      nickname: user.nickname,
+      email: user.email,
+      avatar: user.avatar
+    }
   }
 }

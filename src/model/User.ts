@@ -1,4 +1,4 @@
-import {Prop, TypedSchema, ExtendableMongooseDoc, toModel, ArrayRef} from '@starrah/mongo-ts-struct'
+import {ArrayRef, ExtendableMongooseDoc, Prop, toModel, TypedSchema} from '@starrah/mongo-ts-struct'
 import {Types} from 'mongoose'
 
 @TypedSchema()

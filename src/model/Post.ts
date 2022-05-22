@@ -17,7 +17,7 @@ export class ImageTextContent {
 }
 
 @TypedSchema()
-export class MediaContent {
+export class MediaContentItem {
   @Prop({required: true}) link!: string
 }
 
@@ -27,7 +27,7 @@ export class PostSchema extends ExtendableMongooseDoc {
   @Enum(getEnumKeys(PostTypes), {required: true}) type!: PostTypes
   @Prop() location?: LocationSchema
   @Prop() imageTextContent?: ImageTextContent
-  @Prop() mediaContent?: MediaContent
+  @ArrayOf('string', {default: []}) mediaContent?: string[]
   @ArrayRef('comment', {default: []}) comments!: Comment[] | ObjectId[]
   @ArrayRef('user', {default: []}) likedBy!: UserSchema[] | ObjectId[]
 }
