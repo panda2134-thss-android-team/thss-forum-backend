@@ -28,9 +28,9 @@ const getPosts: Middleware<State> = async (ctx) => {
 const getPostItem: Middleware<State> = async (ctx) => {
   assert(ctx.state.user)
 
-  const post = await Post.findById(ctx.params.id).exec()
+  const post = await Post.findById(ctx.params.postId).exec()
   if (!post) {
-    throw new ResourceNotFoundError('post', ctx.params.id)
+    throw new ResourceNotFoundError('post', ctx.params.postId)
   }
 
   ctx.body = postService.filterPostModelFields(post)
@@ -53,7 +53,7 @@ const addPost = ValidateBody(newPostRequest)(
 const editPost = ValidateBody(editPostRequest)(
   async (ctx, next, body) => {
     assert(ctx.state.user)
-    const postId = ctx.params.id
+    const postId = ctx.params.postId
     let post: PostSchema
     if (body.type === 'normal') {
       post = await postService.editPost(ctx.state.user, postId, PostTypes.NORMAL, body.imageTextContent)
@@ -67,15 +67,15 @@ const editPost = ValidateBody(editPostRequest)(
 
 const removePost: Middleware<State> = async (ctx) => {
   assert(ctx.state.user)
-  const postId = ctx.params.id
+  const postId = ctx.params.postId
   await postService.removePost(ctx.state.user, postId)
   ctx.body = null
 }
 
 export function addToRouter(router: Router<State>) {
   router.get('/', getPosts)
-  router.get('/:id', getPostItem)
+  router.get('/:postId', getPostItem)
   router.post('/', addPost)
-  router.put('/:id', editPost)
-  router.delete('/:id', removePost)
+  router.put('/:postId', editPost)
+  router.delete('/:postId', removePost)
 }

@@ -177,13 +177,14 @@ export class PostService {
    * @param user
    * @param postId
    */
-  async likePost (user: UserSchema, postId: string): Promise<void> {
+  async likePost (user: UserSchema, postId: string): Promise<number> {
     const post = await Post.findById(postId).exec()
     if (! post) {
       throw new ResourceNotFoundError('post', postId)
     }
     // @ts-ignore
-    await Post.findByIdAndUpdate(postId, {$addToSet: { likedBy: user.id }})
+    const res: PostSchema = await Post.findByIdAndUpdate(postId, {$addToSet: { likedBy: user.id }}).exec()
+    return res.likedBy.length
   }
 
   /**
@@ -191,13 +192,14 @@ export class PostService {
    * @param user
    * @param postId
    */
-  async cancelLikePost (user: UserSchema, postId: string): Promise<void> {
+  async cancelLikePost (user: UserSchema, postId: string): Promise<number> {
     const post = await Post.findById(postId).exec()
     if (! post) {
       throw new ResourceNotFoundError('post', postId)
     }
     // @ts-ignore
-    await Post.findByIdAndUpdate(postId, {$pull: { likedBy: user.id }})
+    const res: PostSchema = await Post.findByIdAndUpdate(postId, {$pull: { likedBy: user.id }}).exec()
+    return res.likedBy.length
   }
 }
 

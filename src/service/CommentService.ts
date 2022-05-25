@@ -98,15 +98,24 @@ export class CommentService {
     await comment.remove()
   }
 
-  async likeComment (user: UserSchema, postId: string, commentId: string): Promise<void> {
+  async likeComment (user: UserSchema, postId: string, commentId: string): Promise<number> {
     await this.findComment(postId, commentId) // ensure existence
     // @ts-ignore
-    await Comment.findByIdAndUpdate(commentId, {$addToSet: {likedBy: user.id}})
+    const comment: CommentSchema = await Comment.findByIdAndUpdate(commentId, {$addToSet: {likedBy: user.id}}).exec()
+    return comment.likedBy.length
   }
 
-  async cancelLikeComment (user: UserSchema, postId: string, commentId: string): Promise<void> {
+  async cancelLikeComment (user: UserSchema, postId: string, commentId: string): Promise<number> {
     await this.findComment(postId, commentId)
     // @ts-ignore
-    await Comment.findByIdAndUpdate(commentId, {$pull: {likedBy: user.id}})
+    const comment: CommentSchema = await Comment.findByIdAndUpdate(commentId, {$pull: {likedBy: user.id}}).exec()
+    return comment.likedBy.length
+  }
+
+  filterCommentModelFields (comment: CommentSchema) {
+    return {
+      content: comment.content,
+      parentCommentId: comment.parentCommentId
+    }
   }
 }
