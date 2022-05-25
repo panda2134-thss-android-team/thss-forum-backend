@@ -4,9 +4,9 @@ import {ChangePasswordRequest, LoginRequest, RegisterRequest} from '../../schema
 import {UserService} from '../../service/UserService'
 import {TokenService} from '../../service/TokenService'
 import configuration from '../../configuration'
-import {UnauthorizedError} from '../../errors/UnauthorizedError'
 import AuthMiddleware from '../../middleware/AuthMiddleware'
 import State from '../../middleware/State'
+import assert from 'assert'
 
 const {secret, expireSeconds} = configuration.jwt
 
@@ -36,9 +36,7 @@ const login = ValidateBody(LoginRequest)(
 
 const changePassword = ValidateBody(ChangePasswordRequest)(
   async (ctx, next, {oldPassword, newPassword}) => {
-    if (!ctx.state.user) {
-      throw new UnauthorizedError(undefined, 'change-password')
-    }
+    assert(ctx.state.user)
     await userService.updatePassword(ctx.state.user, oldPassword, newPassword)
     ctx.body = null
   }

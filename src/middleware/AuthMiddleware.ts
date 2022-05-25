@@ -1,8 +1,8 @@
 import {TokenService} from '../service/TokenService'
 import {User} from '../model/User'
 import {KoaMiddleware} from './MiddlewareType'
-import {UnauthorizedError} from '../errors/UnauthorizedError'
 import {BadRequestError} from '../errors/BadRequestError'
+import {UnauthorizedError} from '../errors/UnauthorizedError'
 
 export default function AuthMiddleware(secret: string, expireSeconds: number): KoaMiddleware {
   const tokenService = new TokenService(secret, expireSeconds)

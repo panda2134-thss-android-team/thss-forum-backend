@@ -13,6 +13,7 @@ app.use(router.routes()).use(router.allowedMethods())
 app.use(ErrorMiddleware())
 
 async function main() {
+  mongoose.pluralize(null)
   await mongoose.connect(process.env.MONGODB_URL ?? 'mongodb://localhost:27017/thss-forum')
   app.listen(8080)
 }

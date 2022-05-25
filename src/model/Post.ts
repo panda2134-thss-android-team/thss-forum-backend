@@ -3,6 +3,7 @@ import {ObjectId} from 'mongoose'
 import {UserSchema} from './User'
 import {getEnumKeys} from './helper'
 import {LocationSchema} from './Location'
+import {CommentSchema} from './Comment'
 
 export enum PostTypes {
   NORMAL = 'normal',
@@ -16,20 +17,16 @@ export class ImageTextContent {
   @ArrayOf(String, {required: true}) images!: string[]
 }
 
-@TypedSchema()
-export class MediaContentItem {
-  @Prop({required: true}) link!: string
-}
-
 @TypedSchema({options: {timestamps: true}})
 export class PostSchema extends ExtendableMongooseDoc {
   @Ref('user', {required: true}) by!: UserSchema | ObjectId
   @Enum(getEnumKeys(PostTypes), {required: true}) type!: PostTypes
   @Prop() location?: LocationSchema
   @Prop() imageTextContent?: ImageTextContent
-  @ArrayOf('string', {default: []}) mediaContent?: string[]
-  @ArrayRef('comment', {default: []}) comments!: Comment[] | ObjectId[]
+  @ArrayOf('string') mediaContent?: string[]
+  @ArrayRef('comment', {default: []}) comments!: CommentSchema[] | ObjectId[]
   @ArrayRef('user', {default: []}) likedBy!: UserSchema[] | ObjectId[]
+  @Prop({default: () => new Date()}) createdAt!: Date
 }
 
 export const Post = toModel<PostSchema, typeof PostSchema>(PostSchema, 'post')

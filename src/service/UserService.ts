@@ -3,7 +3,7 @@ import {Following} from '../model/Following'
 import PasswordUtil from '../util/PasswordUtil'
 import bcrypt from 'bcrypt'
 import {Types} from 'mongoose'
-import {UnauthorizedError} from '../errors/UnauthorizedError'
+import {ForbiddenError} from '../errors/ForbiddenError'
 import {ResourceNotFoundError} from '../errors/ResourceNotFoundError'
 import {emailSchema, passwordSchema, userUpdateSchema} from '../schema/users'
 import {z} from 'zod'
@@ -40,6 +40,10 @@ export class UserService {
     const userToFollow = await User.findById(userIdToFollow).exec()
     if (!userToFollow) {
       throw new ResourceNotFoundError('user', userIdToFollow)
+    }
+    const blocked = (user.blockedUsers as any[]).find(x => (x.id.toString() ?? x.toString()) === userIdToFollow)
+    if (blocked) {
+      throw new ForbiddenError(user, 'follow a blocked user')
     }
     const newFollowingObj = {
       by: user.id,
@@ -107,7 +111,7 @@ export class UserService {
 
     const passwordMatch = await bcrypt.compare(password, user.passwordHash)
     if (!passwordMatch) {
-      throw new UnauthorizedError(user, 'login')
+      throw new ForbiddenError(user, 'login')
     }
 
     return user
@@ -145,7 +149,7 @@ export class UserService {
   async updatePassword (user: UserSchema, oldPassword: string, newPassword: string): Promise<void> {
     const passwordMatch = await bcrypt.compare(oldPassword, user.passwordHash)
     if (!passwordMatch) {
-      throw new UnauthorizedError(user, 'updatePassword')
+      throw new ForbiddenError(user, 'updatePassword')
     }
     passwordSchema.parse(newPassword)
     user.passwordHash = await PasswordUtil.hash(newPassword)
@@ -191,7 +195,7 @@ export class UserService {
    */
   filterUserModelFields (user: UserSchema) {
     return {
-      uid: user.id,
+      uid: user.id.toString(),
       nickname: user.nickname,
       email: user.email,
       avatar: user.avatar

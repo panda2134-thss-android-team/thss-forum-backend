@@ -1,8 +1,8 @@
 import {IHttpError} from './IHttpError'
-import {ZodError} from 'zod'
 
 export class UnprocessableEntityError extends Error implements IHttpError {
-  constructor(public readonly object: any, public readonly validationError: ZodError) {
+
+  constructor(public readonly object: any, public readonly validationError: {issues: any[]}) {
     super()
     this.name = 'Unprocessable Entity'
     this.message = `${object} cannot be parsed; errors are: ${validationError.issues}`
@@ -14,7 +14,7 @@ export class UnprocessableEntityError extends Error implements IHttpError {
   }
 
   toResponse() {
-    return {name: this.name, message: this.message, errors: this.validationError.errors}
+    return {name: this.name, message: this.message, errors: this.validationError.issues}
   }
 
 }

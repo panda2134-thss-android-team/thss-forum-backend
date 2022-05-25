@@ -4,6 +4,7 @@
     "@starrah/mongo-ts-struct": "^1.1.2",
     "@types/jsonwebtoken": "^8.5.8",
     "bcrypt": "^5.0.1",
+    "dayjs": "^1.11.2",
     "dotenv": "^16.0.1",
     "jsonwebtoken": "^8.5.1",
     "koa": "^2.13.4",
