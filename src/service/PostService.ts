@@ -2,12 +2,13 @@ import dayjs from 'dayjs'
 import {UnprocessableEntityError} from '../errors/UnprocessableEntityError'
 import {UserSchema} from '../model/User'
 import {ImageTextContent, MediaContent, Post, PostSchema, PostTypes} from '../model/Post'
-import assert from 'assert'
 import {Following} from '../model/Following'
 import {LocationSchema} from '../model/Location'
 import {ResourceNotFoundError} from '../errors/ResourceNotFoundError'
 import {ForbiddenError} from '../errors/ForbiddenError'
 import {BadRequestError} from '../errors/BadRequestError'
+import NotificationServiceInstance, {Broadcast} from './NotificationService'
+import {UserService} from './UserService'
 
 /**
  * 动态筛选器
@@ -53,7 +54,7 @@ export class PostService {
     if (! dayjs(filter.start).isBefore(filter.end)) {
       throw new UnprocessableEntityError(filter, {issues: ["start should not be after end"]})
     }
-    assert(currentUser.populated('blockedUsers'))
+    // assert(currentUser.populated('blockedUsers'))
     if (filter.target === 'following' || filter.target == null) {
       const basicFilter = {
         createdAt: {
@@ -96,6 +97,18 @@ export class PostService {
     }
   }
 
+  private static async broadcastNewPost (user: UserSchema, postId: string) {
+    const userService = new UserService()
+    const followers = await userService.getFollowersOf(user)
+    await NotificationServiceInstance.doBroadcast(
+      new Broadcast('following_updated',
+        followers.map(x => x.id),
+        {
+          uid: user.id,
+          postId
+    }))
+  }
+
   /**
    * 发图文动态
    * @param currentUser 当前用户
@@ -109,7 +122,9 @@ export class PostService {
       imageTextContent: content,
       location
     })
-    return await post.save()
+    const res = await post.save()
+    process.nextTick(PostService.broadcastNewPost.bind(this, currentUser, res.id))
+    return res
   }
 
   /**
@@ -126,7 +141,9 @@ export class PostService {
       mediaContent,
       location
     })
-    return await post.save()
+    const res =  await post.save()
+    process.nextTick(PostService.broadcastNewPost.bind(this, currentUser, res.id))
+    return res
   }
 
   /**
@@ -178,12 +195,18 @@ export class PostService {
    * @param postId
    */
   async likePost (user: UserSchema, postId: string): Promise<number> {
-    const post = await Post.findById(postId).exec()
+    const post = await Post.findById(postId).populate('by').exec()
     if (! post) {
       throw new ResourceNotFoundError('post', postId)
     }
     // @ts-ignore
     const res: PostSchema = await Post.findByIdAndUpdate(postId, {$addToSet: { likedBy: user.id }}, {new: true}).exec()
+    process.nextTick(async () => {
+      await NotificationServiceInstance.doBroadcast(new Broadcast('post_liked', [(post.by as UserSchema).id], {
+        postId,
+        uid: user.id
+      }))
+    })
     return res.likedBy.length
   }
 

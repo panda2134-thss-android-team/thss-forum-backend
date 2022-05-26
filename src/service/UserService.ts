@@ -2,7 +2,7 @@ import {User, UserSchema} from '../model/User'
 import {Following} from '../model/Following'
 import PasswordUtil from '../util/PasswordUtil'
 import bcrypt from 'bcrypt'
-import {Types} from 'mongoose'
+import Mongoose from 'mongoose'
 import {ForbiddenError} from '../errors/ForbiddenError'
 import {ResourceNotFoundError} from '../errors/ResourceNotFoundError'
 import {emailSchema, passwordSchema, userUpdateSchema} from '../schema/users'
@@ -169,7 +169,7 @@ export class UserService {
     }
 
     // @ts-ignore
-    await User.findByIdAndUpdate(user.id, {$addToSet: {blockedUsers: new Types.ObjectId(userIdToBlock)}})
+    await User.findByIdAndUpdate(user.id, {$addToSet: {blockedUsers: new Mongoose.Types.ObjectId(userIdToBlock)}})
   }
 
   /**
@@ -186,7 +186,7 @@ export class UserService {
 
     // a bug of mongoose types
     // @ts-ignore
-    await User.findByIdAndUpdate(user.id, {$pull: {blockedUsers: new Types.ObjectId(userIdToUnblock)}})
+    await User.findByIdAndUpdate(user.id, {$pull: {blockedUsers: new Mongoose.Types.ObjectId(userIdToUnblock)}})
   }
 
   /**

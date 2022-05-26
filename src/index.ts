@@ -1,5 +1,4 @@
-require('dotenv').config()
-
+import dotenv from 'dotenv'
 import logger from './util/Logger'
 import Koa from 'koa'
 import State from './middleware/State'
@@ -9,9 +8,13 @@ import BodyParser from 'koa-bodyparser'
 import {connectToDatabase} from './model'
 import {BadRequestError} from './errors/BadRequestError'
 import configuration from './configuration'
+import './util/RedisCache' // connect to redis
+import KoaEasyWS from 'koa-easy-ws'
 
+dotenv.config()
 const app = new Koa<State, {}>()
 
+app.use(KoaEasyWS())
 app.use(ErrorMiddleware())
 app.use(BodyParser({
   onerror(err) {

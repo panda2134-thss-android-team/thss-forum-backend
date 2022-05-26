@@ -20,6 +20,7 @@ const like: Middleware<State> = async (ctx) => {
     const {postId, commentId} = ctx.params
     const count = await commentService.likeComment(ctx.state.user, postId, commentId)
     ctx.body = { count }
+    ctx.status = 201
 }
 
 const cancelLike: Middleware<State> = async (ctx) => {

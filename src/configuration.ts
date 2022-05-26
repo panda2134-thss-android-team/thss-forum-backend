@@ -1,4 +1,7 @@
 import logger from './util/Logger'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 if (! process.env.JWT_SECRET) {
   logger.error('JWT secret is empty')
@@ -10,8 +13,14 @@ export default {
     secret: process.env['JWT_SECRET'],
     expireSeconds: 7 * 24 * 3600
   },
+  redis: {
+    url: process.env.REDIS_URL
+  },
   mongo: {
     url: process.env.MONGODB_URL
+  },
+  ws: {
+    loginTimeout: parseInt(process.env.WS_LOGIN_TIMEOUT ?? '10000') // 10000ms
   },
   alicloud: {
     accessKey: {

@@ -4,7 +4,7 @@ import {Post} from '../model/Post'
 import {ResourceNotFoundError} from '../errors/ResourceNotFoundError'
 import {ForbiddenError} from '../errors/ForbiddenError'
 import {ObjectId} from 'mongodb'
-import assert from 'assert'
+import NotificationServiceInstance, {Broadcast} from './NotificationService'
 
 interface CommentFilter {
   skip?: number
@@ -24,7 +24,7 @@ export class CommentService {
       throw new ResourceNotFoundError('post', postId)
     }
     const f: CommentFilter = Object.assign({sortBy: 'desc'}, filter)
-    assert(currentUser.populated('blockedUsers'))
+    // assert(currentUser.populated('blockedUsers'))
     let q = Post.aggregate().match({_id: new ObjectId(postId)})
       .unwind('comments')
       .lookup({
@@ -54,12 +54,13 @@ export class CommentService {
    * @param parentCommentId 楼中楼的回复原评论 id
    */
   async addComment (user: UserSchema, postId: string, content: string, parentCommentId?: string): Promise<CommentSchema> {
-    const post = await Post.findById(postId).exec()
+    const post = await Post.findById(postId).populate('by').exec()
     if (!post) {
       throw new ResourceNotFoundError('post', postId)
     }
+    let parentComment: CommentSchema | undefined
     if (parentCommentId) {
-      const parentComment = await Comment.findById(parentCommentId).exec()
+      parentComment = await Comment.findById(parentCommentId).populate('by').exec()
       if (!parentComment) {
         throw new ResourceNotFoundError('comment', parentCommentId)
       }
@@ -73,6 +74,20 @@ export class CommentService {
     await comment.save()
     post.comments.push(comment.id)
     await post.save()
+
+    process.nextTick(async () => {
+      const meta = {
+        postId,
+        commentId: comment.id,
+        uid: user.id
+      }
+      await NotificationServiceInstance.doBroadcast(new Broadcast('post_commented',
+        [(post.by as UserSchema).id], meta))
+      if (parentCommentId) {
+        await NotificationServiceInstance.doBroadcast(new Broadcast('comment_replied',
+          [(parentComment.by as UserSchema).id], meta))
+      }
+    })
 
     return comment
   }
@@ -91,7 +106,7 @@ export class CommentService {
     if (!commentIsInPost) {
       throw new ResourceNotFoundError('comment_in_post', commentId)
     }
-    assert(user.populated('blockedUsers'))
+    // assert(user.populated('blockedUsers'))
     if ((user.blockedUsers as UserSchema[]).find(x => x.id === (comment.by as UserSchema).id)) {
       // blocked, return 403
       throw new ForbiddenError(user, 'view the comment by a blocked user')
@@ -117,8 +132,19 @@ export class CommentService {
 
   async likeComment (user: UserSchema, postId: string, commentId: string): Promise<number> {
     await this.findComment(user, postId, commentId) // ensure existence
+    const post = await Post.findById(postId).populate('by').exec()
     // @ts-ignore
     const comment: CommentSchema = await Comment.findByIdAndUpdate(commentId, {$addToSet: {likedBy: user.id}}, {new: true}).exec()
+    process.nextTick(async () => {
+      await NotificationServiceInstance.doBroadcast(new Broadcast(
+        'comment_liked', [(post.by as UserSchema).id],
+        {
+          postId,
+          commentId,
+          uid: user.id
+        }
+      ))
+    })
     return comment.likedBy.length
   }
 
