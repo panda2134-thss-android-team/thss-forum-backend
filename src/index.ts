@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 import logger from './util/Logger'
 import Koa from 'koa'
 import State from './middleware/State'
@@ -7,8 +9,6 @@ import BodyParser from 'koa-bodyparser'
 import {connectToDatabase} from './model'
 import {BadRequestError} from './errors/BadRequestError'
 import configuration from './configuration'
-
-require('dotenv').config()
 
 const app = new Koa<State, {}>()
 
