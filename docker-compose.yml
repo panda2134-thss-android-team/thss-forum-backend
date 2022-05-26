@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    environment:
+      MONGODB_URL: "mongodb://db:27017/thss-forum"
+      REDIS_URL: "redis://redis:6379"
+  db:
+    image: mongo:latest
+    volumes:
+      - thss-forum-db:/data/db
+  redis:
+    image: redis:latest
+volumes:
+  thss-forum-db:

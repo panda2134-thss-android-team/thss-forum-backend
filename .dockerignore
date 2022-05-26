@@ -1,0 +1,6 @@
+# node packages
+node_modules
+
+# js, map files
+src/**/*.js
+src/**/*.js.map

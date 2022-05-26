@@ -103,6 +103,6 @@ dist
 # TernJS port file
 .tern-port
 
-# js map files
+# js, map files
 src/**/*.js
 src/**/*.js.map

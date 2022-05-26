@@ -1,15 +1,14 @@
 {
   "type": "module",
   "scripts": {
-    "start": "node --experimental-specifier-resolution=node --loader ts-node/esm src/index.ts",
+    "dev": "node --experimental-specifier-resolution=node --loader ts-node/esm src/index.ts",
+    "start": "node --experimental-specifier-resolution=node dist/index.js",
     "build": "tsc"
   },
   "dependencies": {
     "@alicloud/pop-core": "^1.7.11",
     "@koa/router": "^10.1.1",
     "@starrah/mongo-ts-struct": "^1.1.2",
-    "@types/jsonwebtoken": "^8.5.8",
-    "@types/ws": "^8.5.3",
     "bcrypt": "^5.0.1",
     "bufferutil": "^4.0.6",
     "dayjs": "^1.11.2",
@@ -22,20 +21,22 @@
     "mongoose": "^6.3.3",
     "redis": "^4.1.0",
     "reflect-metadata": "^0.1.13",
-    "ts-node": "^10.7.0",
-    "typescript": "^4.8.0-dev.20220515",
     "utf-8-validate": "^5.0.9",
     "winston": "^3.7.2",
     "ws": "^8.6.0",
     "zod": "^3.16.0"
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^8.5.8",
+    "@types/ws": "^8.5.3",
     "@types/bcrypt": "^5.0.0",
     "@types/koa": "^2.13.4",
     "@types/koa-bodyparser": "^4.3.7",
     "@types/koa__router": "^8.0.11",
     "@types/lodash": "^4.14.182",
     "@types/node": "^17.0.32",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.8.0-dev.20220515",
     "mocha": "^10.0.0",
     "mongodb-memory-server": "^8.6.0",
     "serve": "^13.0.2",
