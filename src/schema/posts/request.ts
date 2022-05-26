@@ -10,6 +10,7 @@ const imageTextPost = z.object({
   type: z.literal('normal'),
   location: locationSchema.optional(),
   imageTextContent: z.object({
+    title: z.string(),
     text: z.string(),
     images: z.array(z.string().url())
   })
@@ -18,7 +19,10 @@ const imageTextPost = z.object({
 const mediaPost = z.object({
   type: z.enum(['audio', 'video']),
   location: locationSchema.optional(),
-  mediaContent: z.array(z.string().url())
+  mediaContent: z.object({
+    title: z.string(),
+    media: z.array(z.string().url())
+  })
 })
 
 export const newPostRequest = z.union([imageTextPost, mediaPost])

@@ -4,7 +4,7 @@ import {Middleware} from 'koa'
 import assert from 'assert'
 import {PostService} from '../../service/PostService'
 import {parseStartEndDate} from '../../util/QueryArgParser'
-import {ImageTextContent, Post, PostSchema, PostTypes} from '../../model/Post'
+import {ImageTextContent, MediaContent, Post, PostSchema, PostTypes} from '../../model/Post'
 import {ResourceNotFoundError} from '../../errors/ResourceNotFoundError'
 import {ValidateBody} from '../../schema'
 import {editPostRequest, newPostRequest} from '../../schema/posts/request'
@@ -53,9 +53,10 @@ const addPost = ValidateBody(newPostRequest)(
       post = await postService.makeImageTextPost(ctx.state.user, body.imageTextContent as ImageTextContent, loc)
     } else {
       post = await postService.makeMediaPost(ctx.state.user,
-        body.type === 'audio' ? PostTypes.AUDIO : PostTypes.VIDEO, body.mediaContent, loc)
+        body.type === 'audio' ? PostTypes.AUDIO : PostTypes.VIDEO, body.mediaContent as MediaContent, loc)
     }
     ctx.body = {id: post.id.toString()}
+    ctx.status = 201
   }
 )
 
@@ -68,7 +69,7 @@ const editPost = ValidateBody(editPostRequest)(
       post = await postService.editPost(ctx.state.user, postId, PostTypes.NORMAL, body.imageTextContent as ImageTextContent)
     } else {
       post = await postService.editPost(ctx.state.user,postId,
-        body.type === 'audio' ? PostTypes.AUDIO : PostTypes.VIDEO, body.mediaContent)
+        body.type === 'audio' ? PostTypes.AUDIO : PostTypes.VIDEO, body.mediaContent as MediaContent)
     }
     ctx.body = postService.filterPostModelFields(post)
   }

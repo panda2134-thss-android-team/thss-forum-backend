@@ -127,7 +127,7 @@ export class UserService {
 
     let res: UserSchema | null
     try {
-      res = await User.findByIdAndUpdate(user.id, {$set: update})
+      res = await User.findByIdAndUpdate(user.id, {$set: update}, {new: true})
     } catch (e) {
       if ((e as any).code === 11000) {
         throw new DuplicatedUserError(user.email)
@@ -169,7 +169,7 @@ export class UserService {
     }
 
     // @ts-ignore
-    await User.findOneAndUpdate(user.id, {$addToSet: {blockedUsers: new Types.ObjectId(userIdToBlock)}})
+    await User.findByIdAndUpdate(user.id, {$addToSet: {blockedUsers: new Types.ObjectId(userIdToBlock)}})
   }
 
   /**
@@ -186,7 +186,7 @@ export class UserService {
 
     // a bug of mongoose types
     // @ts-ignore
-    await User.findOneAndUpdate(user.id, {$pullAll: {blockedUsers: new Types.ObjectId(userIdToUnblock)}})
+    await User.findByIdAndUpdate(user.id, {$pull: {blockedUsers: new Types.ObjectId(userIdToUnblock)}})
   }
 
   /**

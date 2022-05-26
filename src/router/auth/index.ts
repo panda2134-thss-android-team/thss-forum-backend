@@ -16,8 +16,13 @@ const tokenService = new TokenService(secret, expireSeconds)
 const authMiddleware = AuthMiddleware(secret, expireSeconds)
 
 const register = ValidateBody(RegisterRequest)(
-  async (ctx, next, {email, password}) => {
+  async (ctx, next, {nickname, email, password}) => {
     const user = await userService.register(email, password)
+    if (nickname) {
+      user.nickname = nickname
+      await user.save()
+    }
+
     ctx.body = { uid: user.id }
     ctx.status = 201
   }

@@ -18,7 +18,7 @@ const getComments: Middleware<State> = async (ctx) => {
     } catch (e) {
         throw new UnprocessableEntityError(ctx.querystring, e as ZodError)
     }
-    const sortBy = parsedQuery.sort_by === 'newest' ? 'desc' : 'asc'
+    const sortBy = parsedQuery.sort_by === 'oldest' ? 'asc' : 'desc'
     const comments = await commentService.getCommentsOfPost(ctx.state.user, postId, {
         sortBy,
         skip: parsedQuery.skip,
@@ -31,7 +31,7 @@ const getCommentById: Middleware<State> = async (ctx) => {
     assert(ctx.state.user)
     const {postId, commentId} = ctx.params
 
-    const comment = await commentService.findComment(postId, commentId)
+    const comment = await commentService.findComment(ctx.state.user, postId, commentId)
     ctx.body = commentService.filterCommentModelFields(comment)
 }
 
@@ -47,6 +47,7 @@ const addComment: Middleware<State> = ValidateBody(newCommentRequest)(
             comment_id: comment.id,
             post_id: postId
         }
+        ctx.status = 201
     }
 )
 
@@ -54,10 +55,7 @@ const removeComment: Middleware<State> = async (ctx) => {
     assert(ctx.state.user)
     const { postId, commentId } = ctx.params
     await commentService.removeComment(ctx.state.user, postId, commentId)
-    ctx.body = {
-        post_id: postId,
-        comment_id: commentId
-    }
+    ctx.body = null
 }
 
 export function addToRouter (router: Router<State>) {

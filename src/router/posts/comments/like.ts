@@ -9,7 +9,7 @@ const getLikes: Middleware<State> = async (ctx) => {
     assert(ctx.state.user)
 
     const {postId, commentId} = ctx.params
-    const comment = await commentService.findComment(postId, commentId)
+    const comment = await commentService.findComment(ctx.state.user, postId, commentId)
 
     ctx.body = { count: comment.likedBy.length }
 }
@@ -31,7 +31,7 @@ const cancelLike: Middleware<State> = async (ctx) => {
 }
 
 export function addToRouter(router: Router<State>) {
-    router.get('/:commentId/likes', getLikes)
-    router.post('/:commentId/likes', like)
-    router.delete('/:commentId/likes', cancelLike)
+    router.get('/:commentId/like', getLikes)
+    router.post('/:commentId/like', like)
+    router.delete('/:commentId/like', cancelLike)
 }

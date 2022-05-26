@@ -2,7 +2,7 @@ import {z} from 'zod'
 import {emailSchema, passwordSchema} from '../users'
 
 export const RegisterRequest = z.object({
-  nickname: z.string(),
+  nickname: z.string().optional(),
   password: passwordSchema,
   email: emailSchema
 })

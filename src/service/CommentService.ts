@@ -3,6 +3,8 @@ import {Comment, CommentSchema} from '../model/Comment'
 import {Post} from '../model/Post'
 import {ResourceNotFoundError} from '../errors/ResourceNotFoundError'
 import {ForbiddenError} from '../errors/ForbiddenError'
+import {ObjectId} from 'mongodb'
+import assert from 'assert'
 
 interface CommentFilter {
   skip?: number
@@ -22,16 +24,19 @@ export class CommentService {
       throw new ResourceNotFoundError('post', postId)
     }
     const f: CommentFilter = Object.assign({sortBy: 'desc'}, filter)
-    let q = Post.aggregate().match({_id: postId})
+    assert(currentUser.populated('blockedUsers'))
+    let q = Post.aggregate().match({_id: new ObjectId(postId)})
       .unwind('comments')
       .lookup({
-        from: 'comment',
+        from: 'comments',
         localField: 'comments',
         foreignField: '_id',
         as: 'commentObject'
       })
+      .unwind('commentObject')
       .replaceRoot('commentObject')
-      .sort({createdAt: f.sortBy})
+      .match({by: {$nin: (currentUser.blockedUsers as UserSchema[]).map(x => x._id)}})
+      .sort({createdAt: f.sortBy === 'asc' ? 1 : -1})
     if (f.skip) {
       q = q.skip(f.skip)
     }
@@ -72,7 +77,7 @@ export class CommentService {
     return comment
   }
 
-  async findComment (postId: string, commentId: string): Promise<CommentSchema> {
+  async findComment (user: UserSchema, postId: string, commentId: string): Promise<CommentSchema> {
     const post = await Post.findById(postId).populate('comments').exec()
     if (!post) {
       throw new ResourceNotFoundError('post', postId)
@@ -86,34 +91,48 @@ export class CommentService {
     if (!commentIsInPost) {
       throw new ResourceNotFoundError('comment_in_post', commentId)
     }
-
+    assert(user.populated('blockedUsers'))
+    if ((user.blockedUsers as UserSchema[]).find(x => x.id === (comment.by as UserSchema).id)) {
+      // blocked, return 403
+      throw new ForbiddenError(user, 'view the comment by a blocked user')
+    }
     return comment
   }
 
   async removeComment (user: UserSchema, postId: string, commentId: string): Promise<void> {
-    const comment = await this.findComment(postId, commentId)
-    if ((comment.by as UserSchema).id !== user.id) {
+    const post = await Post.findById(postId).exec()
+    if (!post) {
+      throw new ResourceNotFoundError('post', postId)
+    }
+    const comment = await this.findComment(user, postId, commentId)
+
+    const commentBy = (comment.by as UserSchema).id
+    if (commentBy !== user.id && post.by !== user.id) {
       throw new ForbiddenError(user, 'remove this comment')
     }
+    //@ts-ignore
+    await Post.findByIdAndUpdate(postId, {$pull: {comments: new ObjectId(comment.id)}})
     await comment.remove()
   }
 
   async likeComment (user: UserSchema, postId: string, commentId: string): Promise<number> {
-    await this.findComment(postId, commentId) // ensure existence
+    await this.findComment(user, postId, commentId) // ensure existence
     // @ts-ignore
-    const comment: CommentSchema = await Comment.findByIdAndUpdate(commentId, {$addToSet: {likedBy: user.id}}).exec()
+    const comment: CommentSchema = await Comment.findByIdAndUpdate(commentId, {$addToSet: {likedBy: user.id}}, {new: true}).exec()
     return comment.likedBy.length
   }
 
   async cancelLikeComment (user: UserSchema, postId: string, commentId: string): Promise<number> {
-    await this.findComment(postId, commentId)
+    await this.findComment(user, postId, commentId)
     // @ts-ignore
-    const comment: CommentSchema = await Comment.findByIdAndUpdate(commentId, {$pull: {likedBy: user.id}}).exec()
+    const comment: CommentSchema = await Comment.findByIdAndUpdate(commentId, {$pull: {likedBy: user.id}}, {new: true}).exec()
     return comment.likedBy.length
   }
 
   filterCommentModelFields (comment: CommentSchema) {
     return {
+      by: (comment.by as any)._id ?? comment.by,
+      id: comment._id,
       content: comment.content,
       parentCommentId: comment.parentCommentId
     }

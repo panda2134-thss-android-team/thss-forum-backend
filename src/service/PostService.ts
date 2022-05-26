@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import {UnprocessableEntityError} from '../errors/UnprocessableEntityError'
 import {UserSchema} from '../model/User'
-import {ImageTextContent, Post, PostSchema, PostTypes} from '../model/Post'
+import {ImageTextContent, MediaContent, Post, PostSchema, PostTypes} from '../model/Post'
 import assert from 'assert'
 import {Following} from '../model/Following'
 import {LocationSchema} from '../model/Location'
@@ -119,7 +119,7 @@ export class PostService {
    * @param mediaContent 音视频内容的数组
    * @param location 可选的地理位置
    */
-  async makeMediaPost (currentUser: UserSchema, type: PostTypes.AUDIO | PostTypes.VIDEO, mediaContent: string[], location?: LocationSchema): Promise<PostSchema> {
+  async makeMediaPost (currentUser: UserSchema, type: PostTypes.AUDIO | PostTypes.VIDEO, mediaContent: MediaContent, location?: LocationSchema): Promise<PostSchema> {
     const post = new Post({
       by: currentUser,
       type,
@@ -136,7 +136,7 @@ export class PostService {
    * @param postType 动态类型，见 `PostTypes`
    * @param content 修改内容，要和动态类型一致；对图文动态，类型为 ImageTextContent; 对音视频则为 string[]
    */
-  async editPost (currentUser: UserSchema, postId: string, postType: PostTypes, content: ImageTextContent | string[]): Promise<PostSchema> {
+  async editPost (currentUser: UserSchema, postId: string, postType: PostTypes, content: ImageTextContent | MediaContent): Promise<PostSchema> {
     const post = await Post.findById(postId).exec()
     if (! post) {
       throw new ResourceNotFoundError('post', postId)
@@ -151,7 +151,7 @@ export class PostService {
     if (postType === PostTypes.NORMAL) {
       post.imageTextContent = content as ImageTextContent
     } else {
-      post.mediaContent = content as string[]
+      post.mediaContent = content as MediaContent
     }
     return await post.save()
   }
@@ -183,7 +183,7 @@ export class PostService {
       throw new ResourceNotFoundError('post', postId)
     }
     // @ts-ignore
-    const res: PostSchema = await Post.findByIdAndUpdate(postId, {$addToSet: { likedBy: user.id }}).exec()
+    const res: PostSchema = await Post.findByIdAndUpdate(postId, {$addToSet: { likedBy: user.id }}, {new: true}).exec()
     return res.likedBy.length
   }
 
@@ -198,7 +198,7 @@ export class PostService {
       throw new ResourceNotFoundError('post', postId)
     }
     // @ts-ignore
-    const res: PostSchema = await Post.findByIdAndUpdate(postId, {$pull: { likedBy: user.id }}).exec()
+    const res: PostSchema = await Post.findByIdAndUpdate(postId, {$pull: { likedBy: user.id }}, {new: true}).exec()
     return res.likedBy.length
   }
 }

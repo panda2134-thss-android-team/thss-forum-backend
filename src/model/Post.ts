@@ -17,13 +17,19 @@ export class ImageTextContent {
   @ArrayOf(String, {required: true}) images!: string[]
 }
 
+@TypedSchema()
+export class MediaContent {
+  @Prop({default: []}) media!: string[]
+  @Prop({required: true}) title: string
+}
+
 @TypedSchema({options: {timestamps: true}})
 export class PostSchema extends ExtendableMongooseDoc {
   @Ref('user', {required: true}) by!: UserSchema | ObjectId
   @Enum(getEnumKeys(PostTypes), {required: true}) type!: PostTypes
   @Prop() location?: LocationSchema
   @Prop() imageTextContent?: ImageTextContent
-  @ArrayOf('string') mediaContent?: string[]
+  @Prop() mediaContent?: MediaContent
   @ArrayRef('comment', {default: []}) comments!: CommentSchema[] | ObjectId[]
   @ArrayRef('user', {default: []}) likedBy!: UserSchema[] | ObjectId[]
   @Prop({default: () => new Date()}) createdAt!: Date
