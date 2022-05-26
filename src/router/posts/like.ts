@@ -1,11 +1,10 @@
 import State from '../../middleware/State'
-import { ParameterizedContext } from 'koa'
+import {Middleware, ParameterizedContext} from 'koa'
 import Router from '@koa/router'
-import { Middleware } from 'koa'
 import assert from 'assert'
-import { Post } from '../../model/Post'
-import { PostService } from '../../service/PostService'
-import { ResourceNotFoundError } from '../../errors/ResourceNotFoundError'
+import {Post} from '../../model/Post'
+import {PostService} from '../../service/PostService'
+import {ResourceNotFoundError} from '../../errors/ResourceNotFoundError'
 
 const postService = new PostService()
 

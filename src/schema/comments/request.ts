@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import {z} from 'zod'
 
 export const getCommentsQuery = z.object({
     skip: z.string().optional().transform(x => x ? parseInt(x) : undefined),

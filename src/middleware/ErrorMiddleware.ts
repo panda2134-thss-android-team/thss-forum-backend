@@ -6,8 +6,18 @@ export default function ErrorMiddleware(): KoaMiddleware {
   return async (ctx, next) => {
     try {
       await next()
+      if (ctx.status === 404) { // default status, not found!
+        ctx.body = {
+          'message': `No such route: "${ctx.method} ${ctx.path}"`
+        }
+        ctx.status = 404 // ctx.body sets status to 200; set it to 404 again
+      } else if (ctx.status >= 400) {
+        ctx.body = {
+          'message': ctx.message
+        }
+      }
     } catch (e) {
-      logger.error(e)
+      logger.error(`error handling http request: ${e.message}`)
       if (! isIHttpError(e)) {
         ctx.body = { 'message': 'Internal Server Error' }
         ctx.status = 500

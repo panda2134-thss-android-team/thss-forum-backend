@@ -1,21 +1,25 @@
+import logger from './util/Logger'
+
+require('dotenv').config()
+
 import Koa from 'koa'
 import State from './middleware/State'
 import router from './router'
 import ErrorMiddleware from './middleware/ErrorMiddleware'
 import BodyParser from 'koa-bodyparser'
-import mongoose from 'mongoose'
+import {connectToDatabase} from './model'
 
-require('dotenv').config()
 const app = new Koa<State, {}>()
 
+app.use(ErrorMiddleware())
 app.use(BodyParser())
 app.use(router.routes()).use(router.allowedMethods())
-app.use(ErrorMiddleware())
 
 async function main() {
-  mongoose.pluralize(null)
-  await mongoose.connect(process.env.MONGODB_URL ?? 'mongodb://localhost:27017/thss-forum')
-  app.listen(8080)
+  await connectToDatabase(process.env.MONGODB_URL)
+  const port = 3000
+  app.listen(port)
+  logger.info(`Server is now listening on localhost:${port}`)
 }
 
 main()

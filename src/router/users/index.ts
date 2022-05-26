@@ -12,8 +12,8 @@ import {parseStartEndDate} from '../../util/QueryArgParser'
 const userService = new UserService()
 const postService = new PostService()
 const authMiddleware = AuthMiddleware(configuration.jwt.secret, configuration.jwt.expireSeconds)
-const authRouter = new Router<State>()
-authRouter.use(authMiddleware)
+const usersRouter = new Router<State>()
+usersRouter.use(authMiddleware)
 
 const getUserDetail: Middleware<State> = async (ctx) => {
   assert(ctx.state.user)
@@ -22,7 +22,7 @@ const getUserDetail: Middleware<State> = async (ctx) => {
   if (!user) {
     throw new ResourceNotFoundError('user', uid)
   }
-  return userService.filterUserModelFields(user)
+  ctx.body = userService.filterUserModelFields(user)
 }
 
 const getPostsOfUser: Middleware<State> = async (ctx) => {
@@ -39,9 +39,11 @@ const getPostsOfUser: Middleware<State> = async (ctx) => {
     target: user,
     ...startEnd
   })
-  return posts.map(postService.filterPostModelFields)
+  ctx.body = posts.map(postService.filterPostModelFields)
 }
 
 
-authRouter.get('/:id', getUserDetail)
-authRouter.get('/:id/posts', getPostsOfUser)
+usersRouter.get('/:id', getUserDetail)
+usersRouter.get('/:id/posts', getPostsOfUser)
+
+export default usersRouter

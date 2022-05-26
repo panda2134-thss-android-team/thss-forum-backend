@@ -8,7 +8,11 @@ export default function AuthMiddleware(secret: string, expireSeconds: number): K
   const tokenService = new TokenService(secret, expireSeconds)
 
   return async (ctx, next) => {
-    const [type, token] = ctx.get('Authorization').split('', 2)
+    const auth = ctx.get('Authorization')
+    if (!auth) {
+      throw new UnauthorizedError('access this endpoint', 'no Authorization header')
+    }
+    const [type, token] = auth.split(' ', 2)
     if (type !== 'Bearer' && type !== 'Token') {
       throw new BadRequestError('invalid Authorization type; only Bearer and Token is accepted')
     }

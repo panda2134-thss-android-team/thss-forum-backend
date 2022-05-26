@@ -1,7 +1,7 @@
-import Router, { Middleware } from "@koa/router"
-import assert from "assert"
-import State from "../../../middleware/State"
-import { CommentService } from "../../../service/CommentService"
+import Router, {Middleware} from '@koa/router'
+import assert from 'assert'
+import State from '../../../middleware/State'
+import {CommentService} from '../../../service/CommentService'
 
 const commentService = new CommentService()
 

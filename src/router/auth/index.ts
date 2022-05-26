@@ -45,6 +45,6 @@ const changePassword = ValidateBody(ChangePasswordRequest)(
 const authRouter = new Router<State>()
 authRouter.post('/register', register)
 authRouter.post('/login', login)
-authRouter.post('/change-password', authMiddleware, changePassword)
+authRouter.put('/change-password', authMiddleware, changePassword)
 
 export default authRouter

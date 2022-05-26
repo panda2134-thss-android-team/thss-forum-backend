@@ -4,10 +4,11 @@ import {Middleware} from 'koa'
 import assert from 'assert'
 import {PostService} from '../../service/PostService'
 import {parseStartEndDate} from '../../util/QueryArgParser'
-import {Post, PostSchema, PostTypes} from '../../model/Post'
+import {ImageTextContent, Post, PostSchema, PostTypes} from '../../model/Post'
 import {ResourceNotFoundError} from '../../errors/ResourceNotFoundError'
 import {ValidateBody} from '../../schema'
 import {editPostRequest, newPostRequest} from '../../schema/posts/request'
+import {LocationSchema} from '../../model/Location'
 
 const postService = new PostService()
 
@@ -40,11 +41,19 @@ const addPost = ValidateBody(newPostRequest)(
   async (ctx, next, body) => {
     assert(ctx.state.user)
     let post: PostSchema
+    let loc: LocationSchema
+    if (body.location) {
+      loc = {
+        description: body.location.description,
+        lon: body.location.lon,
+        lat: body.location.lat
+      }
+    }
     if (body.type === 'normal') {
-      post = await postService.makeImageTextPost(ctx.state.user, body.imageTextContent, body.location)
+      post = await postService.makeImageTextPost(ctx.state.user, body.imageTextContent as ImageTextContent, loc)
     } else {
       post = await postService.makeMediaPost(ctx.state.user,
-        body.type === 'audio' ? PostTypes.AUDIO : PostTypes.VIDEO, body.mediaContent, body.location)
+        body.type === 'audio' ? PostTypes.AUDIO : PostTypes.VIDEO, body.mediaContent, loc)
     }
     ctx.body = {id: post.id.toString()}
   }
@@ -56,7 +65,7 @@ const editPost = ValidateBody(editPostRequest)(
     const postId = ctx.params.postId
     let post: PostSchema
     if (body.type === 'normal') {
-      post = await postService.editPost(ctx.state.user, postId, PostTypes.NORMAL, body.imageTextContent)
+      post = await postService.editPost(ctx.state.user, postId, PostTypes.NORMAL, body.imageTextContent as ImageTextContent)
     } else {
       post = await postService.editPost(ctx.state.user,postId,
         body.type === 'audio' ? PostTypes.AUDIO : PostTypes.VIDEO, body.mediaContent)

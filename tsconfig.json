@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "module": "NodeNext",
     "target": "es6",
     "sourceMap": true,
-    "strict": true,
-    "noImplicitAny": true
+    "noImplicitAny": true,
+    "skipLibCheck": true
   },
   "exclude": [
     "node_modules"

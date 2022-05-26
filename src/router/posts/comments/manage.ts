@@ -1,11 +1,11 @@
-import Router, { Middleware } from "@koa/router"
-import assert from "assert"
-import { z, ZodError } from "zod"
-import { UnprocessableEntityError } from "../../../errors/UnprocessableEntityError"
-import State from "../../../middleware/State"
-import { getCommentsQuery, newCommentRequest } from "../../../schema/comments/request"
-import { ValidateBody } from "../../../schema/index"
-import { CommentService } from "../../../service/CommentService"
+import Router, {Middleware} from '@koa/router'
+import assert from 'assert'
+import {z, ZodError} from 'zod'
+import {UnprocessableEntityError} from '../../../errors/UnprocessableEntityError'
+import State from '../../../middleware/State'
+import {getCommentsQuery, newCommentRequest} from '../../../schema/comments/request'
+import {ValidateBody} from '../../../schema'
+import {CommentService} from '../../../service/CommentService'
 
 const commentService = new CommentService()
 
@@ -30,7 +30,7 @@ const getComments: Middleware<State> = async (ctx) => {
 const getCommentById: Middleware<State> = async (ctx) => {
     assert(ctx.state.user)
     const {postId, commentId} = ctx.params
-    
+
     const comment = await commentService.findComment(postId, commentId)
     ctx.body = commentService.filterCommentModelFields(comment)
 }

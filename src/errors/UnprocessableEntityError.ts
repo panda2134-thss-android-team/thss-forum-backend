@@ -5,7 +5,7 @@ export class UnprocessableEntityError extends Error implements IHttpError {
   constructor(public readonly object: any, public readonly validationError: {issues: any[]}) {
     super()
     this.name = 'Unprocessable Entity'
-    this.message = `${object} cannot be parsed; errors are: ${validationError.issues}`
+    this.message = `${JSON.stringify(object)} cannot be parsed`
   }
 
 

@@ -50,7 +50,7 @@ export class PostService {
     if (filter.start == null) {
       filter.start = dayjs(filter.end).subtract(24, 'hours').toDate()
     }
-    if (dayjs(filter.start).isBefore(filter.end)) {
+    if (! dayjs(filter.start).isBefore(filter.end)) {
       throw new UnprocessableEntityError(filter, {issues: ["start should not be after end"]})
     }
     assert(currentUser.populated('blockedUsers'))
