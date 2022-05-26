@@ -1,7 +1,4 @@
 import logger from './util/Logger'
-
-require('dotenv').config()
-
 import Koa from 'koa'
 import State from './middleware/State'
 import router from './router'
@@ -9,6 +6,9 @@ import ErrorMiddleware from './middleware/ErrorMiddleware'
 import BodyParser from 'koa-bodyparser'
 import {connectToDatabase} from './model'
 import {BadRequestError} from './errors/BadRequestError'
+import configuration from './configuration'
+
+require('dotenv').config()
 
 const app = new Koa<State, {}>()
 
@@ -21,10 +21,10 @@ app.use(BodyParser({
 app.use(router.routes()).use(router.allowedMethods())
 
 async function main() {
-  await connectToDatabase(process.env.MONGODB_URL)
+  await connectToDatabase(configuration.mongo.url)
   const port = 3000
   app.listen(port)
-  logger.info(`Server is now listening on localhost:${port}`)
+  logger.info(`Server is now listening on http://localhost:${port}`)
 }
 
 main()
