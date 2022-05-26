@@ -41,7 +41,7 @@ const addPost = ValidateBody(newPostRequest)(
   async (ctx, next, body) => {
     assert(ctx.state.user)
     let post: PostSchema
-    let loc: LocationSchema
+    let loc: LocationSchema | undefined = undefined
     if (body.location) {
       loc = {
         description: body.location.description,
