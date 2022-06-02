@@ -9,7 +9,7 @@ export class ForbiddenError extends Error implements IHttpError {
   }
 
   status() {
-    return 400
+    return 403
   }
 
   toResponse() {
