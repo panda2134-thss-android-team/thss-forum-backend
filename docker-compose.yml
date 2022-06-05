@@ -1,7 +1,9 @@
 services:
   app:
     build: .
-    environment:
+    ports:
+      - "13000:3000"
+    environment: # overrides the default from env file
       MONGODB_URL: "mongodb://db:27017/thss-forum"
       REDIS_URL: "redis://redis:6379"
   db:

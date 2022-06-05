@@ -23,11 +23,7 @@ app.use(BodyParser({
 }))
 app.use(router.routes()).use(router.allowedMethods())
 
-async function main() {
-  await connectToDatabase(configuration.mongo.url)
-  const port = 3000
-  app.listen(port)
-  logger.info(`Server is now listening on http://localhost:${port}`)
-}
-
-main()
+await connectToDatabase(configuration.mongo.url)
+const port = 3000
+app.listen(port)
+logger.info(`Server is now listening on http://localhost:${port}`)
