@@ -2,8 +2,8 @@ import {z} from 'zod'
 
 export const locationSchema = z.object({
   description: z.string(),
-  lon: z.number().min(-180.0, 'longitude should be > -180').max(180.0, 'longitude should be < 180'),
-  lat: z.number().min(-90.0, 'latitude should be > -90').max(90.0, 'latitude should be < 90')
+  lon: z.number().min(-180.0, '经度 > -180').max(180.0, '经度 < 180'),
+  lat: z.number().min(-90.0, '纬度 > -90').max(90.0, '纬度 < 90')
 })
 
 const imageTextPost = z.object({

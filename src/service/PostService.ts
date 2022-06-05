@@ -22,6 +22,7 @@ interface PostFilter {
   start?: Date
   end?: Date
   target?: UserSchema | 'following'
+  search?: string
 }
 
 export class PostService {
@@ -54,6 +55,9 @@ export class PostService {
     if (! dayjs(filter.start).isBefore(filter.end)) {
       throw new UnprocessableEntityError(filter, {issues: ["start should not be after end"]})
     }
+    if (filter.search == null) {
+      filter.search = ''
+    }
     // assert(currentUser.populated('blockedUsers'))
     if (filter.target === 'following' || filter.target == null) {
       const basicFilter = {
@@ -63,7 +67,11 @@ export class PostService {
         },
         by: {
           $nin: currentUser.blockedUsers as UserSchema[]
-        }
+        },
+        ...(filter.search ? {$text: {
+          $search: filter.search,
+          $language: 'none'
+        }} : {})
       }
       if (filter.target == null) {
         return await Post.find(basicFilter).sort({createdAt: 'desc'}).exec()

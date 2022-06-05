@@ -120,7 +120,7 @@ export class UserService {
   /**
    * 更新用户信息（如头像和昵称）
    * @param user 用户
-   * @param update 更新信息对象，可包含 `avatar` 和 `nickname` 键
+   * @param update 更新信息对象，可包含 `avatar`, `intro` 和 `nickname` 键
    */
   async updateUserProfile (user: UserSchema, update: z.infer<typeof userUpdateSchema>): Promise<void> {
     userUpdateSchema.parse(update)
@@ -198,7 +198,8 @@ export class UserService {
       uid: user.id.toString(),
       nickname: user.nickname,
       email: user.email,
-      avatar: user.avatar
+      avatar: user.avatar,
+      intro: user.intro
     }
   }
 }

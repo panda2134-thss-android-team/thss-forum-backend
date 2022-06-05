@@ -9,6 +9,7 @@ import {ResourceNotFoundError} from '../../errors/ResourceNotFoundError'
 import {ValidateBody} from '../../schema'
 import {editPostRequest, newPostRequest} from '../../schema/posts/request'
 import {LocationSchema} from '../../model/Location'
+import {BadRequestError} from '../../errors/BadRequestError'
 
 const postService = new PostService()
 
@@ -16,12 +17,16 @@ const getPosts: Middleware<State> = async (ctx) => {
   assert(ctx.state.user)
   const startEndQuery = parseStartEndDate(ctx)
   const following = ctx.query.following != null
+  if (Array.isArray(ctx.query.q)) {
+    throw new BadRequestError('query argument q should not be an array')
+  }
+  const search = ctx.query.q
 
   let posts: PostSchema[]
   if (following) {
-    posts = await postService.getPosts(ctx.state.user, {target: 'following', ...startEndQuery})
+    posts = await postService.getPosts(ctx.state.user, {target: 'following', search, ...startEndQuery})
   } else {
-    posts = await postService.getPosts(ctx.state.user, startEndQuery)
+    posts = await postService.getPosts(ctx.state.user, {search, ...startEndQuery})
   }
   ctx.body = posts.map(postService.filterPostModelFields)
 }
