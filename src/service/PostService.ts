@@ -9,6 +9,7 @@ import {ForbiddenError} from '../errors/ForbiddenError'
 import {BadRequestError} from '../errors/BadRequestError'
 import NotificationServiceInstance, {Broadcast} from './NotificationService'
 import {UserService} from './UserService'
+import nodejieba from 'nodejieba'
 
 /**
  * 动态筛选器
@@ -58,6 +59,7 @@ export class PostService {
     if (filter.search == null) {
       filter.search = ''
     }
+    filter.search = nodejieba.cutForSearch(filter.search).join(' ')
     // assert(currentUser.populated('blockedUsers'))
     if (filter.target === 'following' || filter.target == null) {
       const basicFilter = {

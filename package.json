@@ -19,6 +19,7 @@
     "koa-easy-ws": "^2.1.0",
     "lodash": "^4.17.21",
     "mongoose": "^6.3.3",
+    "nodejieba": "^2.6.0",
     "redis": "^4.1.0",
     "reflect-metadata": "^0.1.13",
     "utf-8-validate": "^5.0.9",
@@ -27,19 +28,19 @@
     "zod": "^3.16.0"
   },
   "devDependencies": {
-    "@types/jsonwebtoken": "^8.5.8",
-    "@types/ws": "^8.5.3",
     "@types/bcrypt": "^5.0.0",
+    "@types/jsonwebtoken": "^8.5.8",
     "@types/koa": "^2.13.4",
     "@types/koa-bodyparser": "^4.3.7",
     "@types/koa__router": "^8.0.11",
     "@types/lodash": "^4.14.182",
     "@types/node": "^17.0.32",
-    "ts-node": "^10.7.0",
-    "typescript": "^4.8.0-dev.20220515",
+    "@types/ws": "^8.5.3",
     "mocha": "^10.0.0",
     "mongodb-memory-server": "^8.6.0",
     "serve": "^13.0.2",
-    "typedoc": "^0.22.15"
+    "ts-node": "^10.7.0",
+    "typedoc": "^0.22.15",
+    "typescript": "^4.8.0-dev.20220515"
   }
 }

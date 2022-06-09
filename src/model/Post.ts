@@ -14,6 +14,7 @@ import {UserSchema} from './User'
 import {getEnumKeys} from './helper'
 import {LocationSchema} from './Location'
 import {CommentSchema} from './Comment'
+import nodejieba from 'nodejieba'
 
 export enum PostTypes {
   NORMAL = 'normal',
@@ -53,6 +54,7 @@ export class PostSchema extends ExtendableMongooseDoc implements OnSchemaCreated
       } else {
         this.searchText = this.mediaContent?.title ?? ''
       }
+      this.searchText = nodejieba.cutForSearch(this.searchText).join(' ')
     })
   }
 }

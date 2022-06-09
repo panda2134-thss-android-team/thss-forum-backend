@@ -8,6 +8,8 @@ services:
       REDIS_URL: "redis://redis:6379"
   db:
     image: mongo:latest
+    ports:
+      - "37017:27017"
     volumes:
       - thss-forum-db:/data/db
   redis:
