@@ -11,7 +11,7 @@ export class UnauthorizedError extends Error implements IHttpError {
   }
 
   status() {
-    return 400
+    return 401
   }
 
   toResponse() {
