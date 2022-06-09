@@ -3,8 +3,8 @@ import {IHttpError} from './IHttpError'
 export class DuplicatedUserError extends Error implements IHttpError {
   constructor(email: string) {
     super()
-    this.name = 'Email registered'
-    this.message = `There is already a user with email ${email}`
+    this.name = '电子邮件已注册'
+    this.message = `已有用户使用了邮箱 "${email}"`
   }
 
 

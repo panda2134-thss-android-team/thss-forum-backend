@@ -10,6 +10,8 @@ import {ValidateBody} from '../../schema'
 import {editPostRequest, newPostRequest} from '../../schema/posts/request'
 import {LocationSchema} from '../../model/Location'
 import {BadRequestError} from '../../errors/BadRequestError'
+import {z} from "zod";
+import {UnprocessableEntityError} from "../../errors/UnprocessableEntityError";
 
 const postService = new PostService()
 
@@ -21,12 +23,25 @@ const getPosts: Middleware<State> = async (ctx) => {
     throw new BadRequestError('query argument q should not be an array')
   }
   const search = ctx.query.q
+  let type: PostTypes[] | undefined
+  if (typeof ctx.query.type !== 'undefined') {
+    const typeSchema = z.array(z.nativeEnum(PostTypes))
+    try {
+      if (Array.isArray(ctx.query.type)) {
+        type = typeSchema.parse(ctx.query.type)
+      } else {
+        type = typeSchema.parse([ctx.query.type as PostTypes])
+      }
+    } catch (e: any) {
+      throw new UnprocessableEntityError(ctx.query.type, e.errors)
+    }
+  }
 
   let posts: PostSchema[]
   if (following) {
-    posts = await postService.getPosts(ctx.state.user, {target: 'following', search, ...startEndQuery})
+    posts = await postService.getPosts(ctx.state.user, {target: 'following', search, type, ...startEndQuery})
   } else {
-    posts = await postService.getPosts(ctx.state.user, {search, ...startEndQuery})
+    posts = await postService.getPosts(ctx.state.user, {search, type, ...startEndQuery})
   }
   ctx.body = posts.map(postService.filterPostModelFields)
 }

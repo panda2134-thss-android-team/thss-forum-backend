@@ -3,7 +3,7 @@ import {IHttpError} from './IHttpError'
 export class BadRequestError extends Error implements IHttpError {
   constructor(public readonly description: string) {
     super()
-    this.name = 'Bad Request'
+    this.name = '请求体错误'
     this.message = description
   }
 

@@ -24,6 +24,7 @@ interface PostFilter {
   end?: Date
   target?: UserSchema | 'following'
   search?: string
+  type?: PostTypes[]
 }
 
 export class PostService {
@@ -73,7 +74,12 @@ export class PostService {
         ...(filter.search ? {$text: {
           $search: filter.search,
           $language: 'none'
-        }} : {})
+        }} : {}),
+        ...(Array.isArray(filter.type) ? {
+          type: {
+            $in: filter.type
+          }
+        } : {})
       }
       if (filter.target == null) {
         return await Post.find(basicFilter).sort({createdAt: 'desc'}).exec()

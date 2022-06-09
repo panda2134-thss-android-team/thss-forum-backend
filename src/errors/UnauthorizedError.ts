@@ -3,8 +3,8 @@ import {IHttpError} from './IHttpError'
 export class UnauthorizedError extends Error implements IHttpError {
   constructor(public readonly operation?: string, public readonly reason?: string) {
     super()
-    this.name = 'Unauthorized'
-    this.message = `Only logged in users are allowed to ${operation ?? 'do this action'}`
+    this.name = '未登录'
+    this.message = `只有登录用户允许${operation ?? '完成此操作'}`
     if (reason) {
       this.message += `(${reason})`
     }
