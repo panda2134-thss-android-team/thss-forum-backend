@@ -160,7 +160,8 @@ export class CommentService {
       by: (comment.by as any)._id ?? comment.by,
       id: comment._id,
       content: comment.content,
-      parentCommentId: comment.parentCommentId
+      parentCommentId: comment.parentCommentId,
+      createdAt: comment.createdAt
     }
   }
 }

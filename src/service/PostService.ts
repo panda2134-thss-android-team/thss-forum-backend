@@ -2,7 +2,6 @@ import dayjs from 'dayjs'
 import {UnprocessableEntityError} from '../errors/UnprocessableEntityError'
 import {UserSchema} from '../model/User'
 import {ImageTextContent, MediaContent, Post, PostSchema, PostTypes} from '../model/Post'
-import {Following} from '../model/Following'
 import {LocationSchema} from '../model/Location'
 import {ResourceNotFoundError} from '../errors/ResourceNotFoundError'
 import {ForbiddenError} from '../errors/ForbiddenError'
@@ -39,7 +38,8 @@ export class PostService {
       type: post.type,
       location: post.location,
       imageTextContent: post.imageTextContent,
-      mediaContent: post.mediaContent
+      mediaContent: post.mediaContent,
+      createdAt: post.createdAt
     }
   }
   /**
@@ -84,17 +84,18 @@ export class PostService {
       if (filter.target == null) {
         return await Post.find(basicFilter).sort({createdAt: 'desc'}).exec()
       } else {
-        return await Following.aggregate()
-          .match({by: currentUser.id})
-          .lookup({
-            from: 'post',
-            localField: 'followee',
-            foreignField: 'by',
-            as: 'post'
-          })
-          .unwind('post')
-          .replaceRoot('post')
+        return await Post.aggregate()
           .match(basicFilter)
+          .lookup({
+            from: 'following',
+            localField: 'by',
+            foreignField: 'followee',
+            as: 'followRecord'
+          })
+          .unwind('followRecord')
+          .match({
+            'followRecord.by': currentUser.id
+          })
           .sort({createdAt: 'desc'})
           .exec()
       }
