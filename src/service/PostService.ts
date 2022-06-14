@@ -24,6 +24,9 @@ interface PostFilter {
   target?: UserSchema | 'following'
   search?: string
   type?: PostTypes[]
+  skip?: number
+  limit?: number
+  sortBy?: 'time' | 'like'
 }
 
 export class PostService {
@@ -81,23 +84,42 @@ export class PostService {
           }
         } : {})
       }
-      if (filter.target == null) {
-        return await Post.find(basicFilter).sort({createdAt: 'desc'}).exec()
+      let sortArgument: any = {}
+      if (filter.sortBy === 'time') {
+        sortArgument = {createdAt: 'desc'}
       } else {
-        return await Post.aggregate()
+        sortArgument = {likeCount: 'desc', createdAt: 'desc'}
+      }
+      if (filter.target == null) {
+        const res = await Post.aggregate()
+          .match(basicFilter)
+          .addFields({
+            likeCount: {$size: {$ifNull: ['$likedBy', []]}}
+          })
+          .sort(sortArgument)
+          .skip(filter.skip ?? 0).limit(filter.limit ?? 65536)
+          .exec()
+        return res.map((x: any) => Post.hydrate(x))
+      } else {
+        const res = await Post.aggregate()
           .match(basicFilter)
           .lookup({
-            from: 'following',
+            from: 'followings',
             localField: 'by',
             foreignField: 'followee',
             as: 'followRecord'
           })
           .unwind('followRecord')
           .match({
-            'followRecord.by': currentUser.id
+            'followRecord.by': currentUser._id
           })
-          .sort({createdAt: 'desc'})
+          .addFields({
+            likeCount: {$size: {$ifNull: ['$likedBy', []]}}
+          })
+          .sort(sortArgument)
+          .skip(filter.skip ?? 0).limit(filter.limit ?? 65536)
           .exec()
+        return res.map((x: any) => Post.hydrate(x))
       }
     } else {
       const targetUser = filter.target

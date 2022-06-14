@@ -7,7 +7,9 @@ import {UserService} from '../../service/UserService'
 import {User} from '../../model/User'
 import {ResourceNotFoundError} from '../../errors/ResourceNotFoundError'
 import {PostService} from '../../service/PostService'
-import {parseStartEndDate} from '../../util/QueryArgParser'
+import {getPostQuerySchema} from '../../schema/posts/request'
+import {UnprocessableEntityError} from '../../errors/UnprocessableEntityError'
+import {SafeParseError, z} from 'zod'
 
 const userService = new UserService()
 const postService = new PostService()
@@ -28,7 +30,18 @@ const getUserDetail: Middleware<State> = async (ctx) => {
 const getPostsOfUser: Middleware<State> = async (ctx) => {
   assert(ctx.state.user)
   const uid = ctx.params.id
-  const startEnd = parseStartEndDate(ctx)
+  const parseQueryResult = getPostQuerySchema.safeParse(ctx.query)
+  if (! parseQueryResult.success) {
+    throw new UnprocessableEntityError(ctx.query, (parseQueryResult as SafeParseError<z.infer<typeof getPostQuerySchema>>).error)
+  }
+  const query = parseQueryResult.data
+  const commonGetPostParams = {
+    search: query.q, type: query.type,
+    start: query.start, end: query.end,
+    sortBy: query.sort_by as 'time' | 'like',
+    skip: query.skip,
+    limit: query.limit
+  }
 
   const user = await User.findById(uid).exec()
   if (!user) {
@@ -37,7 +50,7 @@ const getPostsOfUser: Middleware<State> = async (ctx) => {
 
   const posts = await postService.getPosts(ctx.state.user, {
     target: user,
-    ...startEnd
+    ...commonGetPostParams
   })
   ctx.body = posts.map(postService.filterPostModelFields)
 }

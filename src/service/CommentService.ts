@@ -37,13 +37,10 @@ export class CommentService {
       .replaceRoot('commentObject')
       .match({by: {$nin: (currentUser.blockedUsers as UserSchema[]).map(x => x._id)}})
       .sort({createdAt: f.sortBy === 'asc' ? 1 : -1})
-    if (f.skip) {
-      q = q.skip(f.skip)
-    }
-    if (f.limit) {
-      q = q.limit(f.limit)
-    }
-    return await q.exec()
+      .skip(f.skip ?? 0)
+      .limit(f.limit ?? 65536)
+    const res = await q.exec()
+    return res.map((x: any) => Comment.hydrate(x))
   }
 
   /**

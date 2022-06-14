@@ -18,6 +18,7 @@ export default function ErrorMiddleware(): KoaMiddleware {
       }
     } catch (e) {
       logger.error(`error handling http request: ${e.message}`)
+      console.trace()
       if (! isIHttpError(e)) {
         ctx.body = { 'message': 'Internal Server Error' }
         ctx.status = 500

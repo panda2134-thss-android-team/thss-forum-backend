@@ -3,45 +3,37 @@ import State from '../../middleware/State'
 import {Middleware} from 'koa'
 import assert from 'assert'
 import {PostService} from '../../service/PostService'
-import {parseStartEndDate} from '../../util/QueryArgParser'
 import {ImageTextContent, MediaContent, Post, PostSchema, PostTypes} from '../../model/Post'
 import {ResourceNotFoundError} from '../../errors/ResourceNotFoundError'
 import {ValidateBody} from '../../schema'
-import {editPostRequest, newPostRequest} from '../../schema/posts/request'
+import {editPostRequest, getPostQuerySchema, newPostRequest} from '../../schema/posts/request'
 import {LocationSchema} from '../../model/Location'
-import {BadRequestError} from '../../errors/BadRequestError'
-import {z} from "zod";
+import {SafeParseError, z} from "zod";
 import {UnprocessableEntityError} from "../../errors/UnprocessableEntityError";
 
 const postService = new PostService()
 
 const getPosts: Middleware<State> = async (ctx) => {
   assert(ctx.state.user)
-  const startEndQuery = parseStartEndDate(ctx)
-  const following = ctx.query.following != null
-  if (Array.isArray(ctx.query.q)) {
-    throw new BadRequestError('query argument q should not be an array')
+  const parseQueryResult = getPostQuerySchema.safeParse(ctx.query)
+  if (! parseQueryResult.success) {
+    throw new UnprocessableEntityError(ctx.query, (parseQueryResult as SafeParseError<z.infer<typeof getPostQuerySchema>>).error)
   }
-  const search = ctx.query.q
-  let type: PostTypes[] | undefined
-  if (typeof ctx.query.type !== 'undefined') {
-    const typeSchema = z.array(z.nativeEnum(PostTypes))
-    try {
-      if (Array.isArray(ctx.query.type)) {
-        type = typeSchema.parse(ctx.query.type)
-      } else {
-        type = typeSchema.parse([ctx.query.type as PostTypes])
-      }
-    } catch (e: any) {
-      throw new UnprocessableEntityError(ctx.query.type, e.errors)
-    }
-  }
-
+  const query = parseQueryResult.data
   let posts: PostSchema[]
-  if (following) {
-    posts = await postService.getPosts(ctx.state.user, {target: 'following', search, type, ...startEndQuery})
+  const commonGetPostParams = {
+    search: query.q, type: query.type,
+    start: query.start, end: query.end,
+    sortBy: query.sort_by as 'time' | 'like',
+    skip: query.skip,
+    limit: query.limit
+  }
+  if (query.following) {
+    posts = await postService.getPosts(ctx.state.user, {
+      target: 'following', ...commonGetPostParams
+    })
   } else {
-    posts = await postService.getPosts(ctx.state.user, {search, type, ...startEndQuery})
+    posts = await postService.getPosts(ctx.state.user, commonGetPostParams)
   }
   ctx.body = posts.map(postService.filterPostModelFields)
 }

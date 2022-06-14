@@ -1,4 +1,6 @@
 import {z} from 'zod'
+import {dateSchema} from "../utils";
+import {PostTypes} from "../../model/Post";
 
 export const locationSchema = z.object({
   description: z.string(),
@@ -31,3 +33,16 @@ export const editPostRequest = z.union([
   imageTextPost.omit({location: true}),
   mediaPost.omit({location: true})
 ])
+
+export const getPostQuerySchema = z.object({
+  following: z.preprocess(x => !!x, z.boolean()),
+  start: dateSchema.default(new Date(0)),
+  end: dateSchema.default(new Date()),
+  skip: z.string().regex(/\d*/).optional().transform(x => x != null ? parseInt(x) : 0).refine(x => Number.isInteger(x)),
+  limit: z.string().regex(/\d*/).optional().transform(x => x != null ? parseInt(x) : 65535).refine(x => Number.isInteger(x)),
+  sort_by: z.enum(['time', 'like']).default('time'),
+  type:
+    z.nativeEnum(PostTypes).or(z.array(z.nativeEnum(PostTypes))).transform(x => Array.isArray(x) ? x : [x])
+      .optional(),
+  q: z.ostring()
+})
