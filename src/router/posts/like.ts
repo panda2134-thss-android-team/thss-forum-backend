@@ -21,7 +21,8 @@ const getLikes: Middleware<State> = async (ctx) => {
   assert(ctx.state.user)
   const post = await findPost(ctx)
   ctx.body = {
-    count: post.likedBy.length
+    count: post.likedBy.length,
+    likedByMe: await postService.queryUserLikesPost(ctx.state.user, post.id)
   }
 }
 

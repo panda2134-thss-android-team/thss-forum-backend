@@ -241,6 +241,19 @@ export class PostService {
     const res: PostSchema = await Post.findByIdAndUpdate(postId, {$pull: { likedBy: user.id }}, {new: true}).exec()
     return res.likedBy.length
   }
+
+  /**
+   * 用户是否点赞了动态
+   * @param user
+   * @param postId
+   */
+  async queryUserLikesPost (user: UserSchema, postId: string): Promise<boolean> {
+    const post = await Post.findById(postId).populate('likedBy').exec()
+    if (! post) {
+      throw new ResourceNotFoundError('post', postId)
+    }
+    return (post.likedBy as UserSchema[]).map(x => x.id).includes(user.id)
+  }
 }
 
 const postService = new PostService()

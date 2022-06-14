@@ -155,6 +155,12 @@ export class CommentService {
     return comment.likedBy.length
   }
 
+  async queryUserLikesComment (user: UserSchema, postId: string, commentId: string): Promise<boolean> {
+    await this.findComment(user, postId, commentId)
+    const comment = await Comment.findById(commentId).populate('likedBy').exec()
+    return (comment.likedBy as UserSchema[]).map(x => x.id).includes(user.id)
+  }
+
   filterCommentModelFields (comment: CommentSchema) {
     return {
       by: (comment.by as any)._id ?? comment.by,

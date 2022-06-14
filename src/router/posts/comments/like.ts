@@ -11,7 +11,10 @@ const getLikes: Middleware<State> = async (ctx) => {
     const {postId, commentId} = ctx.params
     const comment = await commentService.findComment(ctx.state.user, postId, commentId)
 
-    ctx.body = { count: comment.likedBy.length }
+    ctx.body = {
+        count: comment.likedBy.length,
+        likedByMe: await commentService.queryUserLikesComment(ctx.state.user, postId, commentId)
+    }
 }
 
 const like: Middleware<State> = async (ctx) => {
