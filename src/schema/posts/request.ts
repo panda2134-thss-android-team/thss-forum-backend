@@ -34,10 +34,9 @@ export const editPostRequest = z.union([
   mediaPost.omit({location: true})
 ])
 
-export const getPostQuerySchema = z.object({
-  following: z.preprocess(x => !!x, z.boolean()),
-  start: dateSchema.default(new Date(0)),
-  end: dateSchema.default(new Date()),
+const getPostQuerySchemaBase = z.object({
+  start: dateSchema.default(() => new Date(0)),
+  end: dateSchema.default(() => new Date()),
   skip: z.string().regex(/\d*/).optional().transform(x => x != null ? parseInt(x) : 0).refine(x => Number.isInteger(x)),
   limit: z.string().regex(/\d*/).optional().transform(x => x != null ? parseInt(x) : 65535).refine(x => Number.isInteger(x)),
   sort_by: z.enum(['time', 'like']).default('time'),
@@ -46,3 +45,9 @@ export const getPostQuerySchema = z.object({
       .optional(),
   q: z.ostring()
 })
+
+export const getPostQuerySchema = z.object({
+  following: z.preprocess(x => !!x, z.boolean())
+}).and(getPostQuerySchemaBase)
+
+export const getPostsOfUserQuerySchema = getPostQuerySchemaBase

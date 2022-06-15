@@ -7,7 +7,7 @@ import {UserService} from '../../service/UserService'
 import {User} from '../../model/User'
 import {ResourceNotFoundError} from '../../errors/ResourceNotFoundError'
 import {PostService} from '../../service/PostService'
-import {getPostQuerySchema} from '../../schema/posts/request'
+import {getPostsOfUserQuerySchema} from '../../schema/posts/request'
 import {UnprocessableEntityError} from '../../errors/UnprocessableEntityError'
 import {SafeParseError, z} from 'zod'
 
@@ -30,9 +30,9 @@ const getUserDetail: Middleware<State> = async (ctx) => {
 const getPostsOfUser: Middleware<State> = async (ctx) => {
   assert(ctx.state.user)
   const uid = ctx.params.id
-  const parseQueryResult = getPostQuerySchema.safeParse(ctx.query)
+  const parseQueryResult = getPostsOfUserQuerySchema.safeParse(ctx.query)
   if (! parseQueryResult.success) {
-    throw new UnprocessableEntityError(ctx.query, (parseQueryResult as SafeParseError<z.infer<typeof getPostQuerySchema>>).error)
+    throw new UnprocessableEntityError(ctx.query, (parseQueryResult as SafeParseError<z.infer<typeof getPostsOfUserQuerySchema>>).error)
   }
   const query = parseQueryResult.data
   const commonGetPostParams = {
