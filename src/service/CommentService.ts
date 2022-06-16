@@ -159,11 +159,19 @@ export class CommentService {
   }
 
   filterCommentModelFields (comment: CommentSchema) {
+    let parentCommentId: string
+    if (comment.parentCommentId == null) {
+      parentCommentId = null
+    } else if ((comment.parentCommentId as any).likedBy == null) {
+      parentCommentId = comment.parentCommentId.toString()
+    } else {
+      parentCommentId = (comment.parentCommentId as CommentSchema).id
+    }
     return {
       by: (comment.by as any)._id ?? comment.by,
       id: comment._id,
       content: comment.content,
-      parentCommentId: comment.parentCommentId,
+      parentCommentId,
       createdAt: comment.createdAt
     }
   }
