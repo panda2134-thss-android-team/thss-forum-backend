@@ -34,7 +34,7 @@ export class PostService {
    * 过滤动态模型内容供前端读取
    * @param post 动态
    */
-  filterPostModelFields (post: PostSchema) {
+  filterPostModelFields(post: PostSchema) {
     return {
       id: post.id.toString(),
       by: post.by,
@@ -45,19 +45,22 @@ export class PostService {
       createdAt: post.createdAt
     }
   }
+
   /**
    * 获取动态消息
    * @param currentUser 当前用户的对象
    * @param filter 筛选器。具体见相应类型文档
    */
-  async getPosts (currentUser: UserSchema, filter: PostFilter = {}): Promise<PostSchema[]> {
+  async getPosts(currentUser: UserSchema, filter: PostFilter = {}): Promise<PostSchema[]> {
     // 终止时间默认现在
-    if (filter.end == null) { filter.end = new Date() }
+    if (filter.end == null) {
+      filter.end = new Date()
+    }
     // 起始时间默认等于终止-24h
     if (filter.start == null) {
       filter.start = dayjs(filter.end).subtract(24, 'hours').toDate()
     }
-    if (! dayjs(filter.start).isBefore(filter.end)) {
+    if (!dayjs(filter.start).isBefore(filter.end)) {
       throw new UnprocessableEntityError(filter, {issues: ["start should not be after end"]})
     }
     if (filter.search == null) {
@@ -65,78 +68,78 @@ export class PostService {
     }
     filter.search = nodejieba.cutForSearch(filter.search).join(' ')
     // assert(currentUser.populated('blockedUsers'))
-    if (filter.target === 'following' || filter.target == null) {
-      const basicFilter = {
-        createdAt: {
-          $gt: filter.start,
-          $lt: filter.end
-        },
-        by: {
-          $nin: currentUser.blockedUsers as UserSchema[]
-        },
-        ...(filter.search ? {$text: {
+    const basicFilter = {
+      createdAt: {
+        $gt: filter.start,
+        $lt: filter.end
+      },
+      by: {
+        $nin: currentUser.blockedUsers as UserSchema[]
+      },
+      ...(filter.search ? {
+        $text: {
           $search: filter.search,
           $language: 'none'
-        }} : {}),
-        ...(Array.isArray(filter.type) ? {
-          type: {
-            $in: filter.type
-          }
-        } : {})
-      }
-      let sortArgument: any = {}
-      if (filter.sortBy === 'time') {
-        sortArgument = {createdAt: 'desc'}
-      } else {
-        sortArgument = {likeCount: 'desc', createdAt: 'desc'}
-      }
-      if (filter.target == null) {
-        const res = await Post.aggregate()
-          .match(basicFilter)
-          .addFields({
-            likeCount: {$size: {$ifNull: ['$likedBy', []]}}
-          })
-          .sort(sortArgument)
-          .skip(filter.skip ?? 0).limit(filter.limit ?? 65536)
-          .exec()
-        return res.map((x: any) => Post.hydrate(x))
-      } else {
-        const res = await Post.aggregate()
-          .match(basicFilter)
-          .lookup({
-            from: 'followings',
-            localField: 'by',
-            foreignField: 'followee',
-            as: 'followRecord'
-          })
-          .unwind('followRecord')
-          .match({
-            'followRecord.by': currentUser._id
-          })
-          .addFields({
-            likeCount: {$size: {$ifNull: ['$likedBy', []]}}
-          })
-          .sort(sortArgument)
-          .skip(filter.skip ?? 0).limit(filter.limit ?? 65536)
-          .exec()
-        return res.map((x: any) => Post.hydrate(x))
-      }
+        }
+      } : {}),
+      ...(Array.isArray(filter.type) ? {
+        type: {
+          $in: filter.type
+        }
+      } : {})
+    }
+    let sortArgument: any
+    if (filter.sortBy === 'time') {
+      sortArgument = {createdAt: 'desc'}
+    } else {
+      sortArgument = {likeCount: 'desc', createdAt: 'desc'}
+    }
+    if (filter.target == null) {
+      const res = await Post.aggregate()
+        .match(basicFilter)
+        .addFields({
+          likeCount: {$size: {$ifNull: ['$likedBy', []]}}
+        })
+        .sort(sortArgument)
+        .skip(filter.skip ?? 0).limit(filter.limit ?? 65536)
+        .exec()
+      return res.map((x: any) => Post.hydrate(x))
+    } else if (filter.target === 'following') {
+      const res = await Post.aggregate()
+        .match(basicFilter)
+        .lookup({
+          from: 'followings',
+          localField: 'by',
+          foreignField: 'followee',
+          as: 'followRecord'
+        })
+        .unwind('followRecord')
+        .match({
+          'followRecord.by': currentUser._id
+        })
+        .addFields({
+          likeCount: {$size: {$ifNull: ['$likedBy', []]}}
+        })
+        .sort(sortArgument)
+        .skip(filter.skip ?? 0).limit(filter.limit ?? 65536)
+        .exec()
+      return res.map((x: any) => Post.hydrate(x))
     } else {
       const targetUser = filter.target
-      if ((currentUser.blockedUsers as UserSchema[]).find(x => x.id.toString() === targetUser.id.toString())) {
-        return []
-      }
-      return await Post.find({
-        createdAt: {
-          $gt: filter.start,
-          $lt: filter.end
-        },
-        by: targetUser.id
-      }).exec()
+      const res = await Post.aggregate()
+        .match(basicFilter)
+        .match({ by: targetUser._id })
+        .addFields({
+          likeCount: {$size: {$ifNull: ['$likedBy', []]}}
+        })
+        .sort(sortArgument)
+        .skip(filter.skip ?? 0).limit(filter.limit ?? 65536)
+        .exec()
+      return res.map((x: any) => Post.hydrate(x))
     }
   }
 
-  private static async broadcastNewPost (user: UserSchema, postId: string) {
+  private static async broadcastNewPost(user: UserSchema, postId: string) {
     const userService = new UserService()
     const followers = await userService.getFollowersOf(user)
     await NotificationServiceInstance.doBroadcast(
@@ -145,7 +148,7 @@ export class PostService {
         {
           uid: user.id,
           postId
-    }))
+        }))
   }
 
   /**
@@ -154,7 +157,7 @@ export class PostService {
    * @param content 动态内容
    * @param location 可选的地理位置
    */
-  async makeImageTextPost (currentUser: UserSchema, content: ImageTextContent, location?: LocationSchema): Promise<PostSchema> {
+  async makeImageTextPost(currentUser: UserSchema, content: ImageTextContent, location?: LocationSchema): Promise<PostSchema> {
     const post = new Post({
       by: currentUser,
       type: PostTypes.NORMAL,
@@ -173,14 +176,14 @@ export class PostService {
    * @param mediaContent 音视频内容的数组
    * @param location 可选的地理位置
    */
-  async makeMediaPost (currentUser: UserSchema, type: PostTypes.AUDIO | PostTypes.VIDEO, mediaContent: MediaContent, location?: LocationSchema): Promise<PostSchema> {
+  async makeMediaPost(currentUser: UserSchema, type: PostTypes.AUDIO | PostTypes.VIDEO, mediaContent: MediaContent, location?: LocationSchema): Promise<PostSchema> {
     const post = new Post({
       by: currentUser,
       type,
       mediaContent,
       location
     })
-    const res =  await post.save()
+    const res = await post.save()
     process.nextTick(PostService.broadcastNewPost.bind(this, currentUser, res.id))
     return res
   }
@@ -192,9 +195,9 @@ export class PostService {
    * @param postType 动态类型，见 `PostTypes`
    * @param content 修改内容，要和动态类型一致；对图文动态，类型为 ImageTextContent; 对音视频则为 string[]
    */
-  async editPost (currentUser: UserSchema, postId: string, postType: PostTypes, content: ImageTextContent | MediaContent): Promise<PostSchema> {
+  async editPost(currentUser: UserSchema, postId: string, postType: PostTypes, content: ImageTextContent | MediaContent): Promise<PostSchema> {
     const post = await Post.findById(postId).exec()
-    if (! post) {
+    if (!post) {
       throw new ResourceNotFoundError('post', postId)
     }
     if (currentUser.id.toString() !== post.by.toString()) {
@@ -217,9 +220,9 @@ export class PostService {
    * @param currentUser 当前用户
    * @param postId 动态 id
    */
-  async removePost (currentUser: UserSchema, postId: string): Promise<void> {
+  async removePost(currentUser: UserSchema, postId: string): Promise<void> {
     const post = await Post.findById(postId).exec()
-    if (! post) {
+    if (!post) {
       throw new ResourceNotFoundError('post', postId)
     }
     if (currentUser.id.toString() !== post.by.toString()) {
@@ -233,13 +236,13 @@ export class PostService {
    * @param user
    * @param postId
    */
-  async likePost (user: UserSchema, postId: string): Promise<number> {
+  async likePost(user: UserSchema, postId: string): Promise<number> {
     const post = await Post.findById(postId).populate('by').exec()
-    if (! post) {
+    if (!post) {
       throw new ResourceNotFoundError('post', postId)
     }
     // @ts-ignore
-    const res: PostSchema = await Post.findByIdAndUpdate(postId, {$addToSet: { likedBy: user.id }}, {new: true}).exec()
+    const res: PostSchema = await Post.findByIdAndUpdate(postId, {$addToSet: {likedBy: user.id}}, {new: true}).exec()
     process.nextTick(async () => {
       await NotificationServiceInstance.doBroadcast(new Broadcast('post_liked', [(post.by as UserSchema).id], {
         postId,
@@ -254,13 +257,13 @@ export class PostService {
    * @param user
    * @param postId
    */
-  async cancelLikePost (user: UserSchema, postId: string): Promise<number> {
+  async cancelLikePost(user: UserSchema, postId: string): Promise<number> {
     const post = await Post.findById(postId).exec()
-    if (! post) {
+    if (!post) {
       throw new ResourceNotFoundError('post', postId)
     }
     // @ts-ignore
-    const res: PostSchema = await Post.findByIdAndUpdate(postId, {$pull: { likedBy: user.id }}, {new: true}).exec()
+    const res: PostSchema = await Post.findByIdAndUpdate(postId, {$pull: {likedBy: user.id}}, {new: true}).exec()
     return res.likedBy.length
   }
 
@@ -269,9 +272,9 @@ export class PostService {
    * @param user
    * @param postId
    */
-  async queryUserLikesPost (user: UserSchema, postId: string): Promise<boolean> {
+  async queryUserLikesPost(user: UserSchema, postId: string): Promise<boolean> {
     const post = await Post.findById(postId).populate('likedBy').exec()
-    if (! post) {
+    if (!post) {
       throw new ResourceNotFoundError('post', postId)
     }
     return (post.likedBy as UserSchema[]).map(x => x.id).includes(user.id)
