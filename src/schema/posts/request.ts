@@ -47,7 +47,8 @@ const getPostQuerySchemaBase = z.object({
 })
 
 export const getPostQuerySchema = z.object({
-  following: z.preprocess(x => !!x, z.boolean())
+  following: z.preprocess(x => !!x, z.boolean()),
+  qu: z.string().optional()
 }).and(getPostQuerySchemaBase)
 
 export const getPostsOfUserQuerySchema = getPostQuerySchemaBase

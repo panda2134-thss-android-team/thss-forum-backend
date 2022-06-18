@@ -27,6 +27,7 @@ interface PostFilter {
   skip?: number
   limit?: number
   sortBy?: 'time' | 'like'
+  queryUserNickname?: string // 只在查找不特定用户(target = null / following) 时生效
 }
 
 export class PostService {
@@ -94,9 +95,21 @@ export class PostService {
     } else {
       sortArgument = {likeCount: 'desc', createdAt: 'desc'}
     }
+    let p = Post.aggregate().match(basicFilter)
+    if (filter.queryUserNickname) {
+      p = p.lookup({
+          from: 'users',
+          localField: 'by',
+          foreignField: '_id',
+          as: 'authorRecord'
+        })
+        .unwind('authorRecord')
+        .match({
+          'authorRecord.nickname': new RegExp('.*' + filter.queryUserNickname + '.*', 'i')
+        })
+    }
     if (filter.target == null) {
-      const res = await Post.aggregate()
-        .match(basicFilter)
+      const res = await p
         .addFields({
           likeCount: {$size: {$ifNull: ['$likedBy', []]}}
         })
@@ -105,8 +118,7 @@ export class PostService {
         .exec()
       return res.map((x: any) => Post.hydrate(x))
     } else if (filter.target === 'following') {
-      const res = await Post.aggregate()
-        .match(basicFilter)
+      const res = await p
         .lookup({
           from: 'followings',
           localField: 'by',

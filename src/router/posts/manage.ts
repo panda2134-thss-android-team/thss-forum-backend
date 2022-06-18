@@ -26,7 +26,8 @@ const getPosts: Middleware<State> = async (ctx) => {
     start: query.start, end: query.end,
     sortBy: query.sort_by as 'time' | 'like',
     skip: query.skip,
-    limit: query.limit
+    limit: query.limit,
+    queryUserNickname: query.qu
   }
   if (query.following) {
     posts = await postService.getPosts(ctx.state.user, {
