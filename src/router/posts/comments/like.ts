@@ -13,7 +13,8 @@ const getLikes: Middleware<State> = async (ctx) => {
 
     ctx.body = {
         count: comment.likedBy.length,
-        likedByMe: await commentService.queryUserLikesComment(ctx.state.user, postId, commentId)
+        likedByMe: await commentService.queryUserLikesComment(ctx.state.user, postId, commentId),
+        likes: comment.likedBy.map(x => x.toString())
     }
 }
 
